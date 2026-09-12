@@ -22,6 +22,18 @@
       height: 100%;
       --background-color: #000;
     }
+
+    #diag {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 99999;
+      padding: 8px 12px;
+      background: rgba(0,0,0,.75);
+      color: #00ff66;
+      font: bold 20px monospace;
+      pointer-events: none;
+    }
   </style>
 </head>
 
@@ -29,91 +41,35 @@
 
   <cast-media-player></cast-media-player>
 
+  <div id="diag">RPTV DIAG V3</div>
+
   <script>
-    const TAG = "[RPTV_RECEIVER]";
+    const context =
+      cast.framework.CastReceiverContext.getInstance();
 
-    console.log(TAG + " SCRIPT_LOADED");
+    const playerManager =
+      context.getPlayerManager();
 
-    window.addEventListener("error", function(event) {
-      console.error(
-        TAG + " WINDOW_ERROR",
-        event.message,
-        event.filename,
-        event.lineno,
-        event.colno
-      );
-    });
+    playerManager.setMessageInterceptor(
+      cast.framework.messages.MessageType.LOAD,
+      request => {
 
-    window.addEventListener("unhandledrejection", function(event) {
-      console.error(
-        TAG + " UNHANDLED_REJECTION",
-        event.reason
-      );
-    });
+        const diag = document.getElementById("diag");
 
-    try {
-      console.log(TAG + " GET_CONTEXT");
-
-      const context =
-        cast.framework.CastReceiverContext.getInstance();
-
-      console.log(TAG + " GET_PLAYER_MANAGER");
-
-      const playerManager =
-        context.getPlayerManager();
-
-      console.log(TAG + " INSTALL_LOAD_INTERCEPTOR");
-
-      playerManager.setMessageInterceptor(
-        cast.framework.messages.MessageType.LOAD,
-        function(request) {
-
-          console.log(
-            TAG + " LOAD_REQUEST",
-            JSON.stringify({
-              autoplay: request.autoplay,
-              currentTime: request.currentTime,
-              contentId:
-                request.media
-                  ? request.media.contentId
-                  : null,
-              contentUrl:
-                request.media
-                  ? request.media.contentUrl
-                  : null,
-              contentType:
-                request.media
-                  ? request.media.contentType
-                  : null,
-              streamType:
-                request.media
-                  ? request.media.streamType
-                  : null
-            })
-          );
-
-          return request;
+        if (diag) {
+          diag.textContent = "RPTV V3 - LOAD GELDI";
         }
-      );
 
-      console.log(TAG + " RECEIVER_STARTING");
+        return request;
+      }
+    );
 
-      const options =
-        new cast.framework.CastReceiverOptions();
+    const options =
+      new cast.framework.CastReceiverOptions();
 
-      options.disableIdleTimeout = false;
+    options.disableIdleTimeout = false;
 
-      context.start(options);
-
-      console.log(TAG + " RECEIVER_STARTED");
-
-    } catch (e) {
-
-      console.error(
-        TAG + " STARTUP_EXCEPTION",
-        e && e.stack ? e.stack : String(e)
-      );
-    }
+    context.start(options);
   </script>
 
 </body>

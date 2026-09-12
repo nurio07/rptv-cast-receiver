@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>RPTV Cast Receiver</title>
 
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
@@ -23,16 +24,182 @@
     }
   </style>
 </head>
+
 <body>
+
   <cast-media-player></cast-media-player>
 
   <script>
+    const TAG = "[RPTV_RECEIVER]";
+
+    function safeJson(value) {
+      try {
+        return JSON.stringify(value);
+      } catch (e) {
+        return String(value);
+      }
+    }
+
+    function log(label, data) {
+      if (typeof data === "undefined") {
+        console.log(TAG + " " + label);
+      } else {
+        console.log(TAG + " " + label + " " + safeJson(data));
+      }
+    }
+
+    function logError(label, data) {
+      if (typeof data === "undefined") {
+        console.error(TAG + " " + label);
+      } else {
+        console.error(TAG + " " + label + " " + safeJson(data));
+      }
+    }
+
+    window.addEventListener("error", function (event) {
+      logError("WINDOW_ERROR", {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error ? String(event.error) : null
+      });
+    });
+
+    window.addEventListener("unhandledrejection", function (event) {
+      logError("UNHANDLED_REJECTION", {
+        reason: event.reason ? String(event.reason) : null
+      });
+    });
+
     const context = cast.framework.CastReceiverContext.getInstance();
+    const playerManager = context.getPlayerManager();
+
+    playerManager.setMessageInterceptor(
+      cast.framework.messages.MessageType.LOAD,
+      function (request) {
+
+        try {
+          log("LOAD_REQUEST", {
+            requestId: request.requestId,
+            autoplay: request.autoplay,
+            currentTime: request.currentTime,
+
+            contentId:
+              request.media && request.media.contentId
+                ? request.media.contentId
+                : null,
+
+            contentUrl:
+              request.media && request.media.contentUrl
+                ? request.media.contentUrl
+                : null,
+
+            contentType:
+              request.media && request.media.contentType
+                ? request.media.contentType
+                : null,
+
+            streamType:
+              request.media && request.media.streamType
+                ? request.media.streamType
+                : null,
+
+            metadata:
+              request.media && request.media.metadata
+                ? request.media.metadata
+                : null
+          });
+
+        } catch (e) {
+          logError("LOAD_LOG_ERROR", String(e));
+        }
+
+        // İsteği değiştirmiyoruz.
+        // CAF normal şekilde yüklemeye devam edecek.
+        return request;
+      }
+    );
+
+    playerManager.addEventListener(
+      cast.framework.events.category.CORE,
+      function (event) {
+
+        try {
+          log("CORE_EVENT", {
+            type: event.type,
+            currentMediaTime: event.currentMediaTime,
+            duration: event.duration,
+            reason: event.reason,
+            detailedErrorCode: event.detailedErrorCode,
+            errorCode: event.errorCode,
+            idleReason: event.idleReason,
+            mediaStatus: event.mediaStatus
+          });
+
+        } catch (e) {
+          logError("CORE_EVENT_LOG_ERROR", String(e));
+        }
+      }
+    );
+
+    playerManager.addEventListener(
+      cast.framework.events.category.DEBUG,
+      function (event) {
+
+        try {
+          log("DEBUG_EVENT", {
+            type: event.type,
+            currentMediaTime: event.currentMediaTime,
+            duration: event.duration,
+            reason: event.reason,
+            detailedErrorCode: event.detailedErrorCode,
+            errorCode: event.errorCode,
+            idleReason: event.idleReason
+          });
+
+        } catch (e) {
+          logError("DEBUG_EVENT_LOG_ERROR", String(e));
+        }
+      }
+    );
+
+    playerManager.addEventListener(
+      cast.framework.events.EventType.ERROR,
+      function (event) {
+
+        logError("PLAYER_ERROR", {
+          type: event.type,
+          error: event.error,
+          errorCode: event.errorCode,
+          detailedErrorCode: event.detailedErrorCode,
+          reason: event.reason,
+          idleReason: event.idleReason,
+          currentMediaTime: event.currentMediaTime
+        });
+      }
+    );
+
+    playerManager.addEventListener(
+      cast.framework.events.EventType.MEDIA_STATUS,
+      function (event) {
+
+        log("MEDIA_STATUS", {
+          mediaStatus: event.mediaStatus
+        });
+      }
+    );
+
     const options = new cast.framework.CastReceiverOptions();
 
     options.disableIdleTimeout = false;
 
+    log("RECEIVER_STARTING");
+
     context.start(options);
+
+    log("RECEIVER_STARTED");
   </script>
+
 </body>
 </html>

@@ -22,18 +22,6 @@
       height: 100%;
       --background-color: #000;
     }
-
-    #diag {
-      position: fixed;
-      top: 18px;
-      left: 18px;
-      z-index: 99999;
-      padding: 8px 12px;
-      background: rgba(0,0,0,.75);
-      color: #00ff66;
-      font: bold 20px monospace;
-      pointer-events: none;
-    }
   </style>
 </head>
 
@@ -41,35 +29,9 @@
 
   <cast-media-player></cast-media-player>
 
-  <div id="diag">RPTV DIAG V3</div>
-
   <script>
-    const context =
-      cast.framework.CastReceiverContext.getInstance();
-
-    const playerManager =
-      context.getPlayerManager();
-
-    playerManager.setMessageInterceptor(
-      cast.framework.messages.MessageType.LOAD,
-      request => {
-
-        const diag = document.getElementById("diag");
-
-        if (diag) {
-          diag.textContent = "RPTV V3 - LOAD GELDI";
-        }
-
-        return request;
-      }
-    );
-
-    const options =
-      new cast.framework.CastReceiverOptions();
-
-    options.disableIdleTimeout = false;
-
-    context.start(options);
+    const context = cast.framework.CastReceiverContext.getInstance();
+    context.start();
   </script>
 
 </body>

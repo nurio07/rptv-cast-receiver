@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>RPTV Cast Receiver - Buffered Test</title>
+  <title>RPTV Cast Receiver - Live Test</title>
 
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 
@@ -37,7 +37,7 @@
       cast.framework.messages.MessageType.LOAD,
       request => {
         request.media.streamType =
-          cast.framework.messages.StreamType.BUFFERED;
+          cast.framework.messages.StreamType.LIVE;
 
         return request;
       }

@@ -32,173 +32,88 @@
   <script>
     const TAG = "[RPTV_RECEIVER]";
 
-    function safeJson(value) {
-      try {
-        return JSON.stringify(value);
-      } catch (e) {
-        return String(value);
-      }
-    }
+    console.log(TAG + " SCRIPT_LOADED");
 
-    function log(label, data) {
-      if (typeof data === "undefined") {
-        console.log(TAG + " " + label);
-      } else {
-        console.log(TAG + " " + label + " " + safeJson(data));
-      }
-    }
-
-    function logError(label, data) {
-      if (typeof data === "undefined") {
-        console.error(TAG + " " + label);
-      } else {
-        console.error(TAG + " " + label + " " + safeJson(data));
-      }
-    }
-
-    window.addEventListener("error", function (event) {
-      logError("WINDOW_ERROR", {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        error: event.error ? String(event.error) : null
-      });
+    window.addEventListener("error", function(event) {
+      console.error(
+        TAG + " WINDOW_ERROR",
+        event.message,
+        event.filename,
+        event.lineno,
+        event.colno
+      );
     });
 
-    window.addEventListener("unhandledrejection", function (event) {
-      logError("UNHANDLED_REJECTION", {
-        reason: event.reason ? String(event.reason) : null
-      });
+    window.addEventListener("unhandledrejection", function(event) {
+      console.error(
+        TAG + " UNHANDLED_REJECTION",
+        event.reason
+      );
     });
 
-    const context = cast.framework.CastReceiverContext.getInstance();
-    const playerManager = context.getPlayerManager();
+    try {
+      console.log(TAG + " GET_CONTEXT");
 
-    playerManager.setMessageInterceptor(
-      cast.framework.messages.MessageType.LOAD,
-      function (request) {
+      const context =
+        cast.framework.CastReceiverContext.getInstance();
 
-        try {
-          log("LOAD_REQUEST", {
-            requestId: request.requestId,
-            autoplay: request.autoplay,
-            currentTime: request.currentTime,
+      console.log(TAG + " GET_PLAYER_MANAGER");
 
-            contentId:
-              request.media && request.media.contentId
-                ? request.media.contentId
-                : null,
+      const playerManager =
+        context.getPlayerManager();
 
-            contentUrl:
-              request.media && request.media.contentUrl
-                ? request.media.contentUrl
-                : null,
+      console.log(TAG + " INSTALL_LOAD_INTERCEPTOR");
 
-            contentType:
-              request.media && request.media.contentType
-                ? request.media.contentType
-                : null,
+      playerManager.setMessageInterceptor(
+        cast.framework.messages.MessageType.LOAD,
+        function(request) {
 
-            streamType:
-              request.media && request.media.streamType
-                ? request.media.streamType
-                : null,
+          console.log(
+            TAG + " LOAD_REQUEST",
+            JSON.stringify({
+              autoplay: request.autoplay,
+              currentTime: request.currentTime,
+              contentId:
+                request.media
+                  ? request.media.contentId
+                  : null,
+              contentUrl:
+                request.media
+                  ? request.media.contentUrl
+                  : null,
+              contentType:
+                request.media
+                  ? request.media.contentType
+                  : null,
+              streamType:
+                request.media
+                  ? request.media.streamType
+                  : null
+            })
+          );
 
-            metadata:
-              request.media && request.media.metadata
-                ? request.media.metadata
-                : null
-          });
-
-        } catch (e) {
-          logError("LOAD_LOG_ERROR", String(e));
+          return request;
         }
+      );
 
-        // İsteği değiştirmiyoruz.
-        // CAF normal şekilde yüklemeye devam edecek.
-        return request;
-      }
-    );
+      console.log(TAG + " RECEIVER_STARTING");
 
-    playerManager.addEventListener(
-      cast.framework.events.category.CORE,
-      function (event) {
+      const options =
+        new cast.framework.CastReceiverOptions();
 
-        try {
-          log("CORE_EVENT", {
-            type: event.type,
-            currentMediaTime: event.currentMediaTime,
-            duration: event.duration,
-            reason: event.reason,
-            detailedErrorCode: event.detailedErrorCode,
-            errorCode: event.errorCode,
-            idleReason: event.idleReason,
-            mediaStatus: event.mediaStatus
-          });
+      options.disableIdleTimeout = false;
 
-        } catch (e) {
-          logError("CORE_EVENT_LOG_ERROR", String(e));
-        }
-      }
-    );
+      context.start(options);
 
-    playerManager.addEventListener(
-      cast.framework.events.category.DEBUG,
-      function (event) {
+      console.log(TAG + " RECEIVER_STARTED");
 
-        try {
-          log("DEBUG_EVENT", {
-            type: event.type,
-            currentMediaTime: event.currentMediaTime,
-            duration: event.duration,
-            reason: event.reason,
-            detailedErrorCode: event.detailedErrorCode,
-            errorCode: event.errorCode,
-            idleReason: event.idleReason
-          });
+    } catch (e) {
 
-        } catch (e) {
-          logError("DEBUG_EVENT_LOG_ERROR", String(e));
-        }
-      }
-    );
-
-    playerManager.addEventListener(
-      cast.framework.events.EventType.ERROR,
-      function (event) {
-
-        logError("PLAYER_ERROR", {
-          type: event.type,
-          error: event.error,
-          errorCode: event.errorCode,
-          detailedErrorCode: event.detailedErrorCode,
-          reason: event.reason,
-          idleReason: event.idleReason,
-          currentMediaTime: event.currentMediaTime
-        });
-      }
-    );
-
-    playerManager.addEventListener(
-      cast.framework.events.EventType.MEDIA_STATUS,
-      function (event) {
-
-        log("MEDIA_STATUS", {
-          mediaStatus: event.mediaStatus
-        });
-      }
-    );
-
-    const options = new cast.framework.CastReceiverOptions();
-
-    options.disableIdleTimeout = false;
-
-    log("RECEIVER_STARTING");
-
-    context.start(options);
-
-    log("RECEIVER_STARTED");
+      console.error(
+        TAG + " STARTUP_EXCEPTION",
+        e && e.stack ? e.stack : String(e)
+      );
+    }
   </script>
 
 </body>
